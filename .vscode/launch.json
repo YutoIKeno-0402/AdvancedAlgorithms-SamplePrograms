@@ -1,0 +1,17 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "gdb",
+            "request": "launch",
+            "name": "gdb launch",
+            "openGdbConsole": true,
+            "internalConsoleOptions": "neverOpen",
+            "initCommands": [ "cd ${fileDirname}", "break main" ],
+            "preLaunchTask": "build gcc",
+            "program": "${fileDirname}/${fileBasenameNoExtension}"
+        }
+    ]
+}
