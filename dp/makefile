@@ -1,7 +1,12 @@
-all: backgammon run
+PROGRAM=backgammon.exe
 
-backgammon : backgammon.c
+all: ${PROGRAM} run
+
+%.exe : %.c
 	gcc -o $@ $^
 
-run : backgammon
-	./backgammon
+run : $(PROGRAM)
+	./$(PROGRAM)
+
+clean :
+	rm -f $(PROGRAM)
