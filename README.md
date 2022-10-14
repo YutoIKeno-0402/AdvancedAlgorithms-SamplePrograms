@@ -1,1 +1,1 @@
-[応用アルゴリズム演習](https://www.fine.cs.kobe-u.ac.jp/members/kamada/algo/#!index.md) 用プログラム群
+[応用アルゴリズム演習](https://miyakeyohei.github.io/advalgo-kobe-2022/) 用プログラム群
