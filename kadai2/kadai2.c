@@ -196,8 +196,8 @@ int main(int argc, char* argv[]) {
     struct {
         const char * in, * ans;
     } filepairs[] = 
-    /*{ {"sample.in", "sample.ans"}, { "B1.in", "B1.ans"}}; */
-    { {"kadai2/sample.in", "kadai2/sample.ans"}, { "kadai2/B1.in", "kadai2/B1.ans"}};
+    { {"sample.in", "sample.ans"}, { "B1.in", "B1.ans"}};
+    /*{ {"kadai2/sample.in", "kadai2/sample.ans"}, { "kadai2/B1.in", "kadai2/B1.ans"}}; */
 
     int i;
     for(i=0; i<2; i++) {
