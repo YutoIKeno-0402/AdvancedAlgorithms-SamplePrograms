@@ -4,10 +4,10 @@
 #define MAX_NEIGHBORS 10
 
 typedef struct node {
-    int id;
-    int visited;
-    int neighborCount;
-    struct node * neighbors[MAX_NEIGHBORS]; 
+    int id; /* ノード名*/
+    int visited; /* 探索された回数 */
+    int neighborCount; /* 隣接するノードの数、neighbors 配列の最大引数 */
+    struct node * neighbors[MAX_NEIGHBORS]; /* 隣接するノードの配列、ポインターとして記録 */
 } node_t;
 
 void printNode(node_t * node) {
@@ -17,6 +17,7 @@ void printNode(node_t * node) {
 
 node_t nodes[BUFSIZE]; /* 大域変数（配列） */
 
+/* n ノードを初期化する */
 void initNodes(int n) {
     int i;
     for(i = 0; i<n; i++) {
@@ -26,12 +27,13 @@ void initNodes(int n) {
     }
 }
 
-/*  */
+/* origin から destination へ枝を追加 */
 void link(node_t * origin, node_t * destination) {
     origin->neighbors[origin->neighborCount] = destination;
     origin->neighborCount++;
 }
 
+/* 深さ優先探索 */
 void dfs(node_t * node) {
     printNode(node);
     node->visited++;
@@ -49,7 +51,7 @@ void test1(void) {
     /* グラフの定義 */
     initNodes(4);
     link(&nodes[0], &nodes[2]); /* 0 -> 2 */
-    link(&nodes[0], &nodes[1]); /* 0 -> 2 */
+    link(&nodes[0], &nodes[1]); /* 0 -> 1 */
 
     link(&nodes[1], &nodes[2]); /* 1 -> 2 */
     link(&nodes[1], &nodes[3]); /* 1 -> 3 */
