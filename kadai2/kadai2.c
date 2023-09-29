@@ -2,6 +2,9 @@
 #include <assert.h>
 #include <math.h>
 
+/*******************************************************************************
+ * 設定や、定数
+ ******************************************************************************/
 /* 部屋のサイズの上限 (W:幅, H:高さ) */
 #define MAX_W 30
 #define MAX_H 30
@@ -13,7 +16,7 @@
  */
 typedef struct point {
     int x, y;
-} point_t, * point_tp;
+} point_t;
 
 /******************
  * ついでに、方向は、
@@ -23,47 +26,53 @@ typedef struct point {
  */
 point_t directions[] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
-point_t move(point_t from, point_t direct) {
-    point_t result = {from.x+direct.x, from.y+direct.y};
+/*******************
+ * point に方向を足して、たどり着く point を返す関数
+*/
+point_t move(point_t from, point_t direction) {
+    point_t result = {from.x + direction.x, from.y + direction.y};
     return result;
 }
 
-/*****************
+/*******************************************************************************
  * queue (汎用のつもり)
- */
-
+ ******************************************************************************/
 #define BUFSIZE 900
+/* ELEM （Queueの型）は、利用用途に合わせて変えられる */
 #define ELEM point_t
-/* 型は、利用用途に合わせて変えてください */
 
 typedef struct queue {
     int head, tail, size;
     ELEM buf[BUFSIZE];
-} queue_t, * queue_tp;
+} queue_t;
 
 /****
  * queue の reset をおこなう
  * q: 対象 queue へのポインタ
  */
-void reset(queue_tp q) {
+void reset(queue_t * q) {
     assert(q != NULL);
-    q->head = q->tail = q->size = 0;
+    q->head = 0;
+    q->tail = 0;
+    q->size = 0;
 }
+
 /****
  * queue のサイズを返す
  * q: 対象 queue へのポインタ
  * 返り値: queue のサイズ
  */
-int qSize(queue_tp q) {
+int qSize(queue_t * q) {
     assert(q != NULL);
     return q->size;
 }
+
 /****
  * queue への要素追加
  * q: 対象 queue へのポインタ
  * data: 追加をおこなう要素
  */
-void enqueue(queue_tp q, ELEM data) {
+void enqueue(queue_t * q, ELEM data) {
     assert(q != NULL);
     assert(q->size < BUFSIZE);
     q->buf[q->tail++]=data;
@@ -75,7 +84,7 @@ void enqueue(queue_tp q, ELEM data) {
  * q: 対象 queue へのポインタ
  * 返り値: 取得要素
  */
-ELEM dequeue(queue_tp q) {
+ELEM dequeue(queue_t * q) {
     assert(q != NULL);
     assert(q->size > 0);
     {
@@ -86,26 +95,32 @@ ELEM dequeue(queue_tp q) {
     }
 }
 
-/**********************
- * 壁の処理（鎌田の方で作成済み）
- */
 
-int canGoX[MAX_H+2][MAX_W+2];
-int canGoY[MAX_H+2][MAX_W+2];
+/*******************************************************************************
+ * 壁の処理（作成済み）
+ ******************************************************************************/
+int canGoX[MAX_H+2][MAX_W+2]; /* 左右に移動できるかを記録する配列 */
+int canGoY[MAX_H+2][MAX_W+2]; /* 上下に移動できるかを記録する配列 */
 
 /*****
  * 迷図の各位置から指定された方向にすすめるかどうか。
  * from: 迷図上の位置, {0, 0} が起点、{w-1, h-1)がゴール
- * direct: 進む方向。{1, 0}, {-1, 0}, {0, 1}, {0, -1}のいずれか。
+ * direction: 進む方向。{1, 0}, {-1, 0}, {0, 1}, {0, -1}のいずれか。
  * 返り値: 進める場合は 1, 進めない場合は 0
  */
-int canGo(point_t from, point_t direct) {
-    if(direct.y ==0) {
-        if(direct.x>0) return canGoX[1+from.y][1+from.x];
-        else return canGoX[1+from.y][1+from.x-1];
-    } else { /* direct.x==0*/
-        if(direct.y>0) return canGoY[1+from.y][1+from.x];
-        else return canGoY[1+from.y-1][1+from.x];
+int canGo(point_t from, point_t direction) {
+    if(direction.y == 0) { /* if horizontal movement */
+        if(direction.x>0) {
+            return canGoX[1+from.y][1+from.x];
+        } else {
+            return canGoX[1+from.y][1+from.x-1];
+        }
+    } else { /* vertical movement */
+        if(direction.y>0) {
+            return canGoY[1+from.y][1+from.x];
+        } else { 
+            return canGoY[1+from.y-1][1+from.x];
+        }
     }
 }
 /* 迷図 setup用の関数、皆さんは見る必要はない */
@@ -119,7 +134,7 @@ void setupBoard(FILE * in, int w, int h) {
         }
     }
     i=0;
-    while(1) {
+    for (;;) { // Infinite loop exited using break
         int j;
         for(j=0; j < w-1; j++) {
             int d;
@@ -155,9 +170,10 @@ void printBoard(int w, int h) {
     }
 }
 
-/*********************
+
+/*******************************************************************************
  * プログラム本体
- */
+ ******************************************************************************/
 queue_t strQ;
 
 /******
@@ -168,9 +184,8 @@ queue_t strQ;
  * 返り値: 最短経路長 (問題文で定義)
  */
 int solve(int w, int h) {
-    point_t start = {0, 0};
-
     reset(&strQ);
+    point_t start = {0, 0};
     enqueue(&strQ, start);
 
     while(qSize(&strQ) > 0) {
