@@ -11,7 +11,7 @@
 #define ONE_HOP 10.00001
 typedef struct point { /* 座標 */
     int x, y;
-} point_t, * point_tp;
+} point_t;
 
 #define MAX_N_POINTS 110
 point_t points[MAX_N_POINTS];
@@ -44,9 +44,9 @@ typedef struct searchNode {
     double pathLen; /* 対象ノードまでの経路長 */
     double plusEstimation; /* path + ゴールまでの直線距離 */
     int index;        /* 対象ノード */
-} searchNode_t, * searchNode_tp;
+} searchNode_t;
 
-void printElem(searchNode_tp elem) {
+void printElem(searchNode_t * elem) {
     int i = elem->index;
     printf("(%d[%d,%d], %lf, %lf)\n", i, points[i].x, points[i].y, elem->pathLen, elem->plusEstimation);
 }
@@ -72,69 +72,71 @@ void printElem(searchNode_tp elem) {
 int compare(ELEM * a, ELEM * b);
 
 typedef struct priorityQ {
-  int size;
-  ELEM buf[BUFSIZE];
-} priorityQ_t, * priorityQ_tp;
+    int size;
+    ELEM buf[BUFSIZE];
+} priorityQ_t;
 
-void reset(priorityQ_tp q) {
-  assert(q != NULL);
-  q->size = 0;
+void reset(priorityQ_t * q) {
+    assert(q != NULL);
+    q->size = 0;
 }
 
-int qSize(priorityQ_tp q) {
- assert(q != NULL);
- return q->size;
+int qSize(priorityQ_t * q) {
+    assert(q != NULL);
+    return q->size;
 }
 
-void enqueue(priorityQ_tp q, ELEM data) {
-  assert(q != NULL);
-  assert(q->size < BUFSIZE);
-  { /* upheap */
-      int target=q->size++;
-      while(target!=0) {
-          int parent= (target-1)/2;
-          ELEM * pref = &q->buf[parent];
-          if(compare(pref, &data)>0) {
-              q->buf[target] = *pref;
-              target = parent;
-          } else {
-              break;
-          }
-      }
-      q->buf[target] = data;
-  }
+void enqueue(priorityQ_t * q, ELEM data) {
+    assert(q != NULL);
+    assert(q->size < BUFSIZE);
+    { /* upheap */
+        int target=q->size++;
+        while(target != 0) {
+            int parent = (target-1)/2;
+            ELEM * pref = &q->buf[parent];
+            if(compare(pref, &data)>0) {
+                q->buf[target] = *pref;
+                target = parent;
+            } else {
+                break;
+            }
+        }
+        q->buf[target] = data;
+    }
 }
 
-ELEM dequeue(priorityQ_tp q) {
-  assert(q != NULL);
-  assert(q->size > 0);
-  {
-      ELEM result = q->buf[0];
-      q->size--;
-      ELEM * moved = &q->buf[q->size];
-      {   /* downheap */
-          int target=0;
-          while(1) {
-              int child = target*2+1;
-              if(child >= q->size) break;
-              if(child +1 !=  q->size &&
-                  compare(&q->buf[child],
-                          &q->buf[child+1]) > 0) {
-                  child = child + 1;
-              }
-              if(compare(moved, &q->buf[child])>0) {
-                  q->buf[target] = q->buf[child];
-                  target = child;
-              } else {
-                  break;
-              }
-          }
-          q->buf[target] = *moved;
-          return result;
-      }
-  }
+ELEM dequeue(priorityQ_t * q) {
+    assert(q != NULL);
+    assert(q->size > 0);
+    {
+        ELEM result = q->buf[0];
+        q->size--;
+        ELEM * moved = &q->buf[q->size];
+        {   /* downheap */
+            int target=0;
+            for(;;) { // infinite loop exited through break
+                int child = target*2+1;
+                if(child >= q->size) {
+                    break;
+                }
+                if(child +1 !=  q->size &&
+                        compare(&q->buf[child], &q->buf[child+1]) > 0) {
+                    child = child + 1;
+                }
+                if(compare(moved, &q->buf[child])>0) {
+                    q->buf[target] = q->buf[child];
+                    target = child;
+                } else {
+                    break;
+                }
+            }
+            q->buf[target] = *moved;
+            return result;
+        }
+    }
 }
-void printQueueInside(priorityQ_tp p) {
+
+void printQueueInside(priorityQ_t * p) {
     int i;
     printf("[priorityQ, size: %d, body:{", p->size);
     for(i=0; i<p->size; i++) {
@@ -147,10 +149,14 @@ void printQueueInside(priorityQ_tp p) {
  * 上記で宣言された 比較機
  * 実装しましょう。
  */
-int compare(searchNode_tp a, searchNode_tp b) {
+int compare(searchNode_t * a, searchNode_t * b) {
     /* a, b の順でよければ 負の値 */
-    if(a->plusEstimation < b->plusEstimation) return -1;
-    if(a->plusEstimation == b->plusEstimation) return 0;
+    if(a->plusEstimation < b->plusEstimation) {
+        return -1;
+    }
+    if(a->plusEstimation == b->plusEstimation) {
+        return 0;
+    }
     return 1;
 }
 
@@ -158,7 +164,6 @@ int compare(searchNode_tp a, searchNode_tp b) {
 /****************************************************
  * solver 系
  */
-
 priorityQ_t Q;
 double cost[MAX_N_POINTS];
 
@@ -169,7 +174,7 @@ double solve(int n) {
     for(i=0; i<n;i++) { // setup
         cost[i] = DBL_MAX;
     }
-    searchNode_t start = { 0.0, 0 };
+    searchNode_t start = { 0.0, 0.0, 0 };
     cost[0] = 0.0;
     enqueue(&Q, start);
 
