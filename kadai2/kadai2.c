@@ -151,7 +151,7 @@ void setupBoard(FILE * in, int w, int h) {
     }
 }
 /* 迷図 debug 用の関数、皆さんは見る必要はない */
-void printBoard(int w, int h) {
+void printBoardDebug(int h, int w) {
     int i;
     for(i=0; i< h+2; i++) {
         int j;
@@ -170,11 +170,11 @@ void printBoard(int w, int h) {
     }
 }
 
-
 /*******************************************************************************
  * プログラム本体
  ******************************************************************************/
 queue_t strQ;
+/* TODO 自作のデータ構造や変数、ここに追加 */
 
 /******
  * 各迷図に対する最短路を解く問題。``未完成``につき完成させること。
@@ -185,15 +185,17 @@ queue_t strQ;
  */
 int solve(int w, int h) {
     reset(&strQ);
+    
     point_t start = {0, 0};
     enqueue(&strQ, start);
 
     while(qSize(&strQ) > 0) {
         point_t here = dequeue(&strQ);
-        /* debug print */
-        printf("here: (%d, %d)\n", here.x, here.y); 
+        /* Debug print */
+        printf("here: (%d, %d)", here.x, here.y);
         /* TODO */
     }
+
     return 0;
 }
 
