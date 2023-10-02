@@ -7,7 +7,7 @@
 #include <strings.h>
 
 /**********************
- * map の情報
+ * 問題の情報
  */
 #define MAX_N_ROADS 3000
 #define MAX_N_CITIES 2 * MAX_N_ROADS
@@ -17,68 +17,80 @@
 char cityNames[MAX_N_CITIES][MAX_LENGTH_CITYNAME + 1];
 
 typedef struct roadInfo {
-  int num;
-  struct {
-    int dest;
-    int dist;
-  } roads[MAX_N_ROADS];
-} roadinfo_t, *roadinfo_tp;
+	int num;
+	struct {
+		int dest;
+		int dist;
+	} roads[MAX_N_ROADS];
+} roadinfo_t;
+
+/* 都市に関して，繋がっている道路 */
 roadinfo_t roadinfo[MAX_N_CITIES];
 
+/* 都市に関して，ガスがあるかどうか */
 bool withGas[MAX_N_CITIES];
+
+/* 都市の数 */
 int cityNum;
 
-void resetRoadInfo(int target) { roadinfo[target].num = 0; }
+/*************************　入力ファイルの処理用 ********************************/
+void resetRoadInfo(int target) { 
+	roadinfo[target].num = 0;
+}
 void registerRoad(int src, int dest, int dist) {
-  int num = roadinfo[src].num++;
-  roadinfo[src].roads[num].dest = dest;
-  roadinfo[src].roads[num].dist = dist;
+	int num = roadinfo[src].num++;
+	roadinfo[src].roads[num].dest = dest;
+	roadinfo[src].roads[num].dist = dist;
 }
-int searchOrRegisterCity(char* name) {
-  int i;
-  for (i = 0; i < cityNum; i++) {
-    if (strcmp(cityNames[i], name) == 0) return i;
-  }
-  strcpy(cityNames[cityNum], name);
-  resetRoadInfo(cityNum);
-  return cityNum++;
+int searchOrRegisterCity(char *name)
+{
+	int i;
+	for (i = 0; i < cityNum; i++)
+	{
+		if (strcmp(cityNames[i], name) == 0)
+			return i;
+	}
+	strcpy(cityNames[cityNum], name);
+	resetRoadInfo(cityNum);
+	return cityNum++;
 }
-
-void setup(FILE* in, int n, int m) {
-  int i;
-  fscanf(in, "%s %s", cityNames[0], cityNames[1]);
-  cityNum = 2;
-  withGas[0] = withGas[1] = true;
-  resetRoadInfo(0);
-  resetRoadInfo(1);
-  for (i = 0; i < n; i++) {
-    char srcname[MAX_LENGTH_CITYNAME + 1], destname[MAX_LENGTH_CITYNAME + 1];
-    int src, dest, dist;
-    fscanf(in, "%s %s %d", srcname, destname, &dist);
-    src = searchOrRegisterCity(srcname);
-    dest = searchOrRegisterCity(destname);
-    registerRoad(src, dest, dist);
-    registerRoad(dest, src, dist);
-  }
-  for (i = 2; i < cityNum; i++) withGas[i] = false;
-  for (i = 0; i < m; i++) {
-    char cityname[MAX_LENGTH_CITYNAME + 1];
-    fscanf(in, "%s", cityname);
-    withGas[searchOrRegisterCity(cityname)] = true;
-  }
+void setup(FILE *in, int n, int m) {
+	int i;
+	fscanf(in, "%s %s", cityNames[0], cityNames[1]);
+	cityNum = 2;
+	withGas[0] = withGas[1] = true;
+	resetRoadInfo(0);
+	resetRoadInfo(1);
+	for (i = 0; i < n; i++) {
+		char srcname[MAX_LENGTH_CITYNAME + 1], destname[MAX_LENGTH_CITYNAME + 1];
+		int src, dest, dist;
+		fscanf(in, "%s %s %d", srcname, destname, &dist);
+		src = searchOrRegisterCity(srcname);
+		dest = searchOrRegisterCity(destname);
+		registerRoad(src, dest, dist);
+		registerRoad(dest, src, dist);
+	}
+	for (i = 2; i < cityNum; i++) {
+		withGas[i] = false;
+	}
+	for (i = 0; i < m; i++) {
+		char cityname[MAX_LENGTH_CITYNAME + 1];
+		fscanf(in, "%s", cityname);
+		withGas[searchOrRegisterCity(cityname)] = true;
+	}
 }
 
 typedef struct searchNode {
-  int pathLen;
-  int cityID;
-} searchNode_t, *searchNode_tp;
+	int pathLen;
+	int cityID;
+} searchNode_t;
 
-void printItem(searchNode_tp elem) {
-  int id = elem->cityID;
-  printf("([%d:%s], %d)\n", id, cityNames[id], elem->pathLen);
+void printItem(searchNode_t *elem) {
+	int id = elem->cityID;
+	printf("([%d:%s], %d)", id, cityNames[id], elem->pathLen);
 }
 
-/***********************************************
+/**************
  * priority queue (汎用のつもり)
  */
 
@@ -96,163 +108,173 @@ void printItem(searchNode_tp elem) {
  *          [b, a] の順で並べるべきなら正の値を返す
  * 例：要素が整数値なら、 return *a - *b; で OK.
  */
-int compare(ELEM* a, ELEM* b);
+int compare(ELEM * a, ELEM * b);
 
 typedef struct priorityQ {
-  int size;
-  ELEM buf[BUFSIZE];
-} priorityQ_t, *priorityQ_tp;
+	int size;
+	ELEM buf[BUFSIZE];
+} priorityQ_t;
 
-void reset(priorityQ_tp q) {
-  assert(q != NULL);
-  q->size = 0;
+void reset(priorityQ_t * q) {
+	assert(q != NULL);
+	q->size = 0;
 }
 
-int qSize(priorityQ_tp q) {
-  assert(q != NULL);
-  return q->size;
+int qSize(priorityQ_t * q) {
+	assert(q != NULL);
+	return q->size;
 }
 
-void enqueue(priorityQ_tp q, ELEM data) {
-  assert(q != NULL);
-  assert(q->size < BUFSIZE);
-  { /* upheap */
-    int target = q->size++;
-    while (target != 0) {
-      int parent = (target - 1) / 2;
-      ELEM* pref = &q->buf[parent];
-      if (compare(pref, &data) > 0) {
-        q->buf[target] = *pref;
-        target = parent;
-      } else {
-        break;
-      }
-    }
-    q->buf[target] = data;
-  }
+void enqueue(priorityQ_t * q, ELEM data) {
+	assert(q != NULL);
+	assert(q->size < BUFSIZE);
+	{ /* upheap */
+		int target = q->size++;
+		while (target != 0) {
+			int parent = (target - 1) / 2;
+			ELEM *pref = &q->buf[parent];
+			if (compare(pref, &data) > 0) {
+				q->buf[target] = *pref;
+				target = parent;
+			} else {
+				break;
+			}
+		}
+		q->buf[target] = data;
+	}
 }
 
-ELEM dequeue(priorityQ_tp q) {
-  assert(q != NULL);
-  assert(q->size > 0);
-  {
-    ELEM result = q->buf[0];
-    q->size--;
-    ELEM* moved = &q->buf[q->size];
-    { /* downheap */
-      int target = 0;
-      while (1) {
-        int child = target * 2 + 1;
-        if (child >= q->size) break;
-        if (child + 1 != q->size &&
-            compare(&q->buf[child], &q->buf[child + 1]) > 0) {
-          child = child + 1;
-        }
-        if (compare(moved, &q->buf[child]) > 0) {
-          q->buf[target] = q->buf[child];
-          target = child;
-        } else {
-          break;
-        }
-      }
-      q->buf[target] = *moved;
-      return result;
-    }
-  }
+ELEM dequeue(priorityQ_t * q) {
+	assert(q != NULL);
+	assert(q->size > 0);
+	{
+		ELEM result = q->buf[0];
+		q->size--;
+		ELEM * moved = &q->buf[q->size];
+		{ /* downheap */
+			int target = 0;
+			for (;;) { // Infinite loop exited through break
+				int child = target * 2 + 1;
+				if (child >= q->size) {
+					break;
+				}
+				if (child + 1 != q->size &&
+					compare(&q->buf[child], &q->buf[child + 1]) > 0) {
+					child = child + 1;
+				}
+				if (compare(moved, &q->buf[child]) > 0) {
+					q->buf[target] = q->buf[child];
+					target = child;
+				} else {
+					break;
+				}
+			}
+			q->buf[target] = *moved;
+			return result;
+		}
+	}
 }
-void printQueueInside(priorityQ_tp p) {
-  int i;
-  printf("[priorityQ, size: %d, body:{", p->size);
-  for (i = 0; i < p->size; i++) {
-    if (i != 0) printf(", ");
-    printItem(&p->buf[i]);
-  }
-  printf("}]\n");
+void printQueueInside(priorityQ_t * p) {
+	int i;
+	printf("[priorityQ, size: %d, body:{", p->size);
+	for (i = 0; i < p->size; i++) {
+		if (i != 0) {
+			printf(", ");
+		}
+		printItem(&p->buf[i]);
+	}
+	printf("}]\n");
 }
 
 /*
  * ここまで、優先度キューのライブラリ
  *************************************/
-
-int compare(searchNode_tp a, searchNode_tp b) {
-  /* まずは、優先度の比較 */
-  int ap = a->pathLen;
-  int bp = b->pathLen;
-  if (ap != bp) return ap - bp;
-  /* 勝負がつかなかったときは、idの小さい順にしましょう。
-   * idが一致することはないって前提 */
-  return a->cityID - b->cityID;
+int compare(searchNode_t *a, searchNode_t *b) {
+	/* まずは、優先度の比較 */
+	int ap = a->pathLen;
+	int bp = b->pathLen;
+	if (ap != bp)
+	{
+		return ap - bp;
+	}
+	else
+	{
+		/* 勝負がつかなかったときは、idの小さい順にしましょう。
+		 * idが一致することはないって前提 */
+		return a->cityID - b->cityID;
+	}
 }
-
-/*********************************************
+/*************************************
  * TODO
  */
 priorityQ_t Q;
+/*　TODO 自作のデータ構造や変数をここに追加 */
+
 
 int solve(int n, int m, int cap) {
-  int i;
-  int count = 0;
-  reset(&Q);
+	/* 初期化 */
+	reset(&Q);
+	searchNode_t start = {0, 0};
+	enqueue(&Q, start);
 
-  searchNode_t start = {0, 0};
-  enqueue(&Q, start);
+	/* TODO */
 
-  /* TODO */
-  return -1; /* ダミーコード */
+	return -1;
 }
+
 /*******
  * こちらで用意したmain 関数。
  * 問題準備してから、solve() をよび、正解比較もおこなう。
  */
-int main(int argc, char* argv[]) {
-  int optionF = 0;
-  struct {
-    char *in, *ans0, *ans;
-  } filesets[] = {
-      {"sample.in", "sample0.ans", "sample.ans"},
-      {"D.in", "D0.ans", "D.ans"}};
+int main(void) {
+	int optionF = 0;
+	struct {
+		char *in, *ans0, *ans;
+	} filesets[] = {
+		{"sample.in", "sample0.ans", "sample.ans"},
+		{"D.in", "D0.ans", "D.ans"}};
 
-  int i;
-  for (i = 0; i < 2; i++) {
-    char* inFile = filesets[i].in;
-    char* ansFile = (optionF == 0) ? filesets[i].ans0 : filesets[i].ans;
-    FILE* in = fopen(inFile, "r");
-    FILE* ansIn = fopen(ansFile, "r");
-    if (in == NULL) {
-      printf("Can't open file: %s.\n", inFile);
-      return 0;
-    }
-    if (ansIn == NULL) {
-      printf("Can't open file: %s.\n", ansFile);
-      return 0;
-    }
-    int failCount = 0;
-    int totalCount = 0;
-    printf("Processing input: %s\n", inFile);
-    while (1) {
-      int n, m, cap, result, ans;
-      fscanf(in, "%d %d %d", &n, &m, &cap);
-      if (n == 0) break;
-      setup(in, n, m);
-      result = solve(n, m, cap);
-      fscanf(ansIn, "%d", &ans);
-      /*printf("%d\n", result);*/
-      if (result != ans) {
-        failCount++;
-        printf(
-            "You failed problem No. %d (result: %d, ans: %d) header %d %d %d\n",
-            totalCount, result, ans, n, m, cap);
-      }
-      totalCount++;
-    }
-    if (failCount == 0) {
-      printf("Congratulation! You passed all problems (%d) in %s!\n",
-             totalCount, inFile);
-    } else {
-      printf("Im sorry you missed %d/%d in %s!\n", failCount, totalCount,
-             inFile);
-      return 0;
-    }
-  }
-  return 0;
+	int i;
+	for (i = 0; i < 2; i++) {
+		char *inFile = filesets[i].in;
+		char *ansFile = (optionF == 0) ? filesets[i].ans0 : filesets[i].ans;
+		FILE *in = fopen(inFile, "r");
+		FILE *ansIn = fopen(ansFile, "r");
+		if (in == NULL) {
+			printf("Can't open file: %s.\n", inFile);
+			return 0;
+		}
+		if (ansIn == NULL) {
+			printf("Can't open file: %s.\n", ansFile);
+			return 0;
+		}
+		int failCount = 0;
+		int totalCount = 0;
+		printf("Processing input: %s\n", inFile);
+		for(;;) { // Infinite loop exited through break
+			int n, m, cap, result, ans;
+			fscanf(in, "%d %d %d", &n, &m, &cap);
+			if (n == 0) {
+				break;
+			}
+			setup(in, n, m);
+			result = solve(n, m, cap);
+			fscanf(ansIn, "%d", &ans);
+			/*printf("%d\n", result);*/
+			if (result != ans) {
+				failCount++;
+				printf(
+					"You failed problem No. %d (result: %d, ans: %d) header %d %d %d\n",
+					totalCount, result, ans, n, m, cap);
+			}
+			totalCount++;
+		}
+		if (failCount == 0) {
+			printf("Congratulation! You passed all problems (%d) in %s!\n", totalCount, inFile);
+		} else {
+			printf("Im sorry you missed %d/%d in %s!\n", failCount, totalCount, inFile);
+			return 0;
+		}
+	}
+	return 0;
 }
