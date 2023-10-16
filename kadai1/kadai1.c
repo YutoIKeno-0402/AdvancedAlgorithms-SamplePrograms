@@ -73,7 +73,7 @@ void test2(void) {
     }
     
     /* 深さ優先探索 */
-    dfs(&nodes[12]); /* ノード 0 からスタート */
+    dfs(&nodes[10]); /* ノード 10 からスタート */
 }
 
 int main(void)  {
