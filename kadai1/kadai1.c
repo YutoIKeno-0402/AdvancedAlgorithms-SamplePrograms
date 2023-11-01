@@ -47,7 +47,7 @@ void dfs(node_t * node) {
     /* 初めてじゃ無かった時、あるいは隣接するノード全部探索済みになった時に、呼出側に戻る */
 }
 
-void test1(void) {
+void test1() {
     /* グラフの定義 */
     initNodes(4);
     link(&nodes[0], &nodes[2]); /* 0 -> 2 */
@@ -64,7 +64,7 @@ void test1(void) {
     dfs(&nodes[0]); /* ノード 0 からスタート */
 }
 
-void test2(void) {
+void test2() {
     int i;
     initNodes(13); /* ノード 0 を使わない、ノード 1～12 を利用 */
     for(i=3; i<13; i++) {
@@ -76,8 +76,21 @@ void test2(void) {
     dfs(&nodes[10]); /* ノード 10 からスタート */
 }
 
+void test3() {
+    initNodes(4);
+    link(&nodes[0], &nodes[3]); /* 0 -> 3 */
+    link(&nodes[0], &nodes[1]); /* 0 -> 1 */
+
+    link(&nodes[1], &nodes[2]); /* 1 -> 2 */
+    link(&nodes[1], &nodes[3]); /* 1 -> 3 */
+    
+    link(&nodes[2], &nodes[3]); /* 2 -> 3 */
+    dfs(&nodes[0]);
+}
+
 int main(void)  {
-    test1();
+    /* test1(); */
     /* test2(); */
+    test3();
     return 0;
 }
