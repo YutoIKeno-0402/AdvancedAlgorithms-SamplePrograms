@@ -175,6 +175,10 @@ void printBoardDebug(int h, int w) {
  ******************************************************************************/
 queue_t strQ;
 /* TODO 自作のデータ構造や変数、ここに追加 */
+point_t north={0,-1};
+point_t south={0,1};
+point_t west={-1,0};
+point_t east={1,0};
 
 /******
  * 各迷図に対する最短路を解く問題。``未完成``につき完成させること。
@@ -188,13 +192,60 @@ int solve(int w, int h) {
     
     point_t start = {0, 0};
     enqueue(&strQ, start);
+     int visited[w][h];
+    int i,j;
+    for(i=0;i<w;i++){
+        for(j=0;j<h;j++){
+            visited[i][j]=0;
+        }
+    }
+    point_t dest;
+    int answer[w][h];
+    for(i=0;i<w;i++){
+        for(j=0;j<h;j++){
+            answer[i][j]=1;
+        }
+    }
 
     while(qSize(&strQ) > 0) {
         point_t here = dequeue(&strQ);
         /* Debug print */
         printf("here: (%d, %d)", here.x, here.y);
         /* TODO */
+         if(here.x==w-1 && here.y==h-1){
+            return answer[w-1][h-1];
     }
+         if(canGo(here,north)==1 && visited[here.x][here.y-1]==0){
+            dest.x=here.x;
+            dest.y=here.y-1;
+            enqueue(&strQ,dest);
+            visited[here.x][here.y-1]++;
+            answer[here.x][here.y-1]=answer[here.x][here.y]+1;
+        } //北方向
+
+        if(canGo(here,south)==1 && visited[here.x][here.y+1]==0){
+            dest.x=here.x;
+            dest.y=here.y+1;
+            enqueue(&strQ,dest);
+            visited[here.x][here.y+1]++;
+            answer[here.x][here.y+1]=answer[here.x][here.y]+1;
+        } //南方向
+
+        if(canGo(here,west)==1 && visited[here.x-1][here.y]==0){
+            dest.x=here.x-1;
+            dest.y=here.y;
+            enqueue(&strQ,dest);
+            visited[here.x-1][here.y]++;
+            answer[here.x-1][here.y]=answer[here.x][here.y]+1;
+        } //西方向
+
+        if(canGo(here,east)==1 && visited[here.x+1][here.y]==0){
+            dest.x=here.x+1;
+            dest.y=here.y;
+            enqueue(&strQ,dest);
+            visited[here.x+1][here.y]++;
+            answer[here.x+1][here.y]=answer[here.x][here.y]+1;
+        } //東方向
 
     return 0;
 }
